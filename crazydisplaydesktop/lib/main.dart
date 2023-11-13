@@ -1,6 +1,12 @@
+import 'dart:ffi';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:flutter/material.dart';
+import 'package:web_socket_channel/io.dart';
+import 'dart:convert';
+
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,17 +40,57 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+
+  List<String> condes = ["Connect", "Disconnect"];
+  String actualtextconnect = "Connect";
+  String ipserver = "";
   String messagetextform = "";
   String iptextform = "";
+  String port = "8888";
+  String _miVariableTexto = "Disconnected!";
 
   final TextEditingController ipController = TextEditingController();
   final TextEditingController messageController = TextEditingController();
 
-  void _incrementCounter() {
+  bool conectado = false;
+
+  void conectardesconectar() {
+    if (conectado) {
+      conectado = false;
+    } else if (!conectado) {
+      conectado = true;
+    }
+  }
+
+  void actualizar_texto_connectar() {
     setState(() {
-      _counter++;
+      if (conectado == true) {
+        actualtextconnect = condes[1];
+      } else if (conectado == false) {
+        actualtextconnect = condes[0];
+      }
     });
+  }
+
+  bool esDireccionIP(String cadena) {
+    List<String> partes = cadena.split('.');
+
+    if (partes.length != 4) {
+      return false;
+    }
+
+    for (var parte in partes) {
+      try {
+        int valor = int.parse(parte);
+        if (valor < 0 || valor > 255) {
+          return false;
+        }
+      } catch (e) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   @override
@@ -62,6 +108,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           children: <Widget>[
             TextFormField(
+              controller: ipController,
               decoration: const InputDecoration(
                 border: UnderlineInputBorder(),
                 labelText: 'Set IP server',
@@ -78,9 +125,23 @@ class _MyHomePageState extends State<MyHomePage> {
             Row(
               children: [
                 ElevatedButton(
-                  onPressed: () {},
-                  child: Text('Connect'),
-                ),
+                    onPressed: () {
+                      ipserver = ipController.text;
+                      if (esDireccionIP(ipserver)) {
+                        if (!conectado) {
+                          connectToServer(ipserver, port);
+                        } else if (conectado) {}
+                      }
+                    },
+                    child: conectado
+                        ? Text(
+                            "$actualtextconnect",
+                            style: TextStyle(color: Colors.red),
+                          )
+                        : Text(
+                            "$actualtextconnect",
+                            style: TextStyle(color: Colors.green),
+                          )),
                 Spacer(),
                 ElevatedButton(
                   onPressed: () {
@@ -89,10 +150,39 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: Text('Send'),
                 )
               ],
-            )
+            ),
+            SizedBox(height: 40),
           ],
         ),
       )),
     );
+  }
+
+   void connectToServer(String ip, String port) async {
+    try {
+      final channel = IOWebSocketChannel.connect('ws://$ip:$port');
+      channel.sink.add("Hola servidor");
+      conectado = true;
+      actualizar_texto_connectar();
+      channel.stream.listen((message) {
+        // Manejar mensajes recibidos del servidor
+      }, onDone: () {
+        // Manejar cuando la conexión se cierra
+        setState(() {
+          conectado = false;
+          actualizar_texto_connectar();
+        });
+      }, onError: (error) {
+        // Manejar errores de conexión
+        print('Error de conexión: $error');
+      });
+    } catch (e) {
+      print('Error al conectar al servidor: $e');
+    }
+    // Espera 5 segundos y verifica si la conexión se estableció
+  }
+
+  void disconnectToServer(String ip, String port) async {
+    try {} catch (e) {}
   }
 }
