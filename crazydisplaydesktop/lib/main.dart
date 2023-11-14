@@ -1,7 +1,9 @@
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math';
 
+import 'package:crazydisplaydesktop/mensaje.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/io.dart';
 import 'dart:convert';
@@ -40,8 +42,11 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  IOWebSocketChannel? channel;
 
   List<String> condes = ["Connect", "Disconnect"];
+  List<Mensaje> mensajes = [];
+
   String actualtextconnect = "Connect";
   String ipserver = "";
   String messagetextform = "";
@@ -116,6 +121,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             SizedBox(height: 20), // Espacio entre los TextFormFields
             TextFormField(
+              controller: messageController,
               decoration: const InputDecoration(
                 border: UnderlineInputBorder(),
                 labelText: 'Message',
@@ -125,12 +131,14 @@ class _MyHomePageState extends State<MyHomePage> {
             Row(
               children: [
                 ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       ipserver = ipController.text;
                       if (esDireccionIP(ipserver)) {
                         if (!conectado) {
                           connectToServer(ipserver, port);
-                        } else if (conectado) {}
+                        } else if (conectado) {
+                          disconnectToServer(ipserver, port);
+                        }
                       }
                     },
                     child: conectado
@@ -144,9 +152,11 @@ class _MyHomePageState extends State<MyHomePage> {
                           )),
                 Spacer(),
                 ElevatedButton(
-                  onPressed: () {
-                    // Coloca aquí el código que se ejecutará cuando se presione el botón.
-                  },
+                  onPressed: conectado
+                      ? () {
+                          enviarmensajeyguardararray();
+                        }
+                      : null,
                   child: Text('Send'),
                 )
               ],
@@ -158,31 +168,107 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-   void connectToServer(String ip, String port) async {
-    try {
-      final channel = IOWebSocketChannel.connect('ws://$ip:$port');
-      channel.sink.add("Hola servidor");
-      conectado = true;
-      actualizar_texto_connectar();
-      channel.stream.listen((message) {
-        // Manejar mensajes recibidos del servidor
-      }, onDone: () {
-        // Manejar cuando la conexión se cierra
-        setState(() {
-          conectado = false;
-          actualizar_texto_connectar();
-        });
-      }, onError: (error) {
-        // Manejar errores de conexión
-        print('Error de conexión: $error');
+  void connectToServer(String ip, String port) async {
+    channel = IOWebSocketChannel.connect('ws://$ip:$port');
+    channel?.sink.add("Hola servidor");
+    conectado = true;
+    actualizar_texto_connectar();
+    channel?.stream.listen((message) {
+      // Manejar mensajes recibidos del servidor
+    }, onDone: () {
+      // Manejar cuando la conexión se cierra
+      conectado = false;
+      setState(() {
+        actualizar_texto_connectar();
       });
-    } catch (e) {
-      print('Error al conectar al servidor: $e');
-    }
+    }, onError: (error) {
+      // Manejar errores de conexión
+      print('Error de conexión: $error');
+    });
     // Espera 5 segundos y verifica si la conexión se estableció
   }
 
   void disconnectToServer(String ip, String port) async {
-    try {} catch (e) {}
+    channel?.sink.close();
+  }
+
+  Future<void> enviarmensajeyguardararray() async {
+    String mensaje = messageController.text;
+    if (checkmensajesrepetidos(mensaje)) {
+      channel?.sink.add(mensaje);
+      messageController.clear();
+      String miip = await obtenerDireccionIPLocal();
+      print(miip);
+      Mensaje mensajeobject = new Mensaje(
+          Id: idrandom(),
+          ip: miip.toString(),
+          horaEnvio: DateTime.now(),
+          texto: mensaje);
+      mensajes.add(mensajeobject);
+      await agregarDatosAlArchivo(mensajeobject.toJson());
+    } else if (!checkmensajesrepetidos(mensaje)) {
+      print("El mensaje no puede ser repetido");
+    } else if (mensaje == "") {
+      print("No es posible enviar mensajes vacios.");
+    }
+  }
+
+  Future<String> obtenerDireccionIPLocal() async {
+    try {
+      for (var interface in await NetworkInterface.list()) {
+        for (var addr in interface.addresses) {
+          // Verifica si la dirección es IPv4 y no es la dirección loopback
+          if (addr.type == InternetAddressType.IPv4 && !addr.isLoopback) {
+            return addr.address;
+          }
+        }
+      }
+    } catch (e) {
+      print('Error al obtener la dirección IP local: $e');
+    }
+
+    return 'No se pudo obtener la dirección IP local';
+  }
+
+  bool checkmensajesrepetidos(String mensaje) {
+    for (var i = 0; i < mensajes.length; i++) {
+      if (mensajes[i].texto == mensaje) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static const String archivoJSONPath = 'data/assets/mensajes.json';
+
+  Future<void> agregarDatosAlArchivo(Map<String, dynamic> nuevosDatos) async {
+    final archivo = File(archivoJSONPath);
+    List<Map<String, dynamic>> datos = await cargarDatosDesdeArchivo();
+    datos.add(nuevosDatos);
+    await archivo.writeAsString(jsonEncode(datos));
+  }
+
+  Future<List<Map<String, dynamic>>> cargarDatosDesdeArchivo() async {
+    final archivo = File(archivoJSONPath);
+
+    if (await archivo.exists()) {
+      final contenido = await archivo.readAsString();
+      final List<dynamic> datos = jsonDecode(contenido);
+      return datos.cast<Map<String, dynamic>>();
+    } else {
+      return [];
+    }
+  }
+
+  int idrandom() {
+    Random r = new Random();
+    int? numeroAleatorio;
+    numeroAleatorio = r.nextInt(901) + 100;
+    for (var i = 0; i < mensajes.length; i++) {
+      if (mensajes[i].Id == numeroAleatorio) {
+        return idrandom();
+      }
+    }
+    return numeroAleatorio;
   }
 }
