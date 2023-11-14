@@ -3,6 +3,9 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 
+import 'package:crazydisplaydesktop/Lista.dart';
+import 'package:crazydisplaydesktop/Utils.dart';
+import 'package:crazydisplaydesktop/appdata.dart';
 import 'package:crazydisplaydesktop/mensaje.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/io.dart';
@@ -47,12 +50,12 @@ class _MyHomePageState extends State<MyHomePage> {
   List<String> condes = ["Connect", "Disconnect"];
   List<Mensaje> mensajes = [];
 
+  String archivoJSONPath = 'data/assets/mensajes.json';
   String actualtextconnect = "Connect";
   String ipserver = "";
   String messagetextform = "";
   String iptextform = "";
   String port = "8888";
-  String _miVariableTexto = "Disconnected!";
 
   final TextEditingController ipController = TextEditingController();
   final TextEditingController messageController = TextEditingController();
@@ -108,6 +111,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Center(
           child: Container(
+        color: Colors.amber.shade200,
         width: 300,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
         child: Column(
@@ -161,12 +165,18 @@ class _MyHomePageState extends State<MyHomePage> {
                 )
               ],
             ),
-            SizedBox(height: 40),
+            SizedBox(height: 20),
+            Expanded(
+                child: Container(
+              alignment: Alignment.center,
+              child: SimpleTextWidget(text: "text"),
+            ))
           ],
         ),
       )),
     );
   }
+/* AQUI EMPIEZAN FUNCIONES QUE UTILIZAREMOS PARA EL CORRECTO DESARROLLO DE LA APLICACIÓN*/
 
   void connectToServer(String ip, String port) async {
     channel = IOWebSocketChannel.connect('ws://$ip:$port');
@@ -198,14 +208,23 @@ class _MyHomePageState extends State<MyHomePage> {
       channel?.sink.add(mensaje);
       messageController.clear();
       String miip = await obtenerDireccionIPLocal();
-      print(miip);
-      Mensaje mensajeobject = new Mensaje(
-          Id: idrandom(),
+      int newid;
+      if (mensajes.isEmpty) {
+        Random r = Random();
+        int? numeroAleatorio;
+        numeroAleatorio = r.nextInt(901) + 100;
+        newid = numeroAleatorio;
+      }else{
+        newid = idrandom();
+      }
+      Mensaje mensajeobject = Mensaje(
+          Id: newid,
           ip: miip.toString(),
           horaEnvio: DateTime.now(),
           texto: mensaje);
+
       mensajes.add(mensajeobject);
-      await agregarDatosAlArchivo(mensajeobject.toJson());
+      await agregarDatosAlArchivo(mensajeobject.toJson(), archivoJSONPath);
     } else if (!checkmensajesrepetidos(mensaje)) {
       print("El mensaje no puede ser repetido");
     } else if (mensaje == "") {
@@ -239,36 +258,15 @@ class _MyHomePageState extends State<MyHomePage> {
     return true;
   }
 
-  static const String archivoJSONPath = 'data/assets/mensajes.json';
-
-  Future<void> agregarDatosAlArchivo(Map<String, dynamic> nuevosDatos) async {
-    final archivo = File(archivoJSONPath);
-    List<Map<String, dynamic>> datos = await cargarDatosDesdeArchivo();
-    datos.add(nuevosDatos);
-    await archivo.writeAsString(jsonEncode(datos));
-  }
-
-  Future<List<Map<String, dynamic>>> cargarDatosDesdeArchivo() async {
-    final archivo = File(archivoJSONPath);
-
-    if (await archivo.exists()) {
-      final contenido = await archivo.readAsString();
-      final List<dynamic> datos = jsonDecode(contenido);
-      return datos.cast<Map<String, dynamic>>();
-    } else {
-      return [];
-    }
-  }
-
   int idrandom() {
-    Random r = new Random();
-    int? numeroAleatorio;
-    numeroAleatorio = r.nextInt(901) + 100;
-    for (var i = 0; i < mensajes.length; i++) {
-      if (mensajes[i].Id == numeroAleatorio) {
-        return idrandom();
-      }
+  Random r = Random();
+  int? numeroAleatorio;
+  numeroAleatorio = r.nextInt(901) + 100;
+  for (var i = 0; i < mensajes.length; i++) {
+    if (mensajes[i].Id == numeroAleatorio) {
+      return idrandom();
     }
-    return numeroAleatorio;
   }
+  return numeroAleatorio;
+}
 }
