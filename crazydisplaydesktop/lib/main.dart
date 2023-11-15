@@ -1,17 +1,11 @@
-import 'dart:ffi';
 import 'dart:io';
-import 'dart:isolate';
 import 'dart:math';
 
 import 'package:crazydisplaydesktop/Lista.dart';
-import 'package:crazydisplaydesktop/Utils.dart';
 import 'package:crazydisplaydesktop/appdata.dart';
 import 'package:crazydisplaydesktop/mensaje.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/io.dart';
-import 'dart:convert';
-
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 void main() {
   runApp(const MyApp());
@@ -111,7 +105,6 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Center(
           child: Container(
-        color: Colors.amber.shade200,
         width: 300,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
         child: Column(
@@ -167,10 +160,10 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             SizedBox(height: 20),
             Expanded(
-                child: Container(
-              alignment: Alignment.center,
-              child: SimpleTextWidget(text: "text"),
-            ))
+                child: conectado
+                    ? Container(
+                        child: Lista(mensajes: mensajes))
+                    : Container()),
           ],
         ),
       )),
@@ -181,7 +174,9 @@ class _MyHomePageState extends State<MyHomePage> {
   void connectToServer(String ip, String port) async {
     channel = IOWebSocketChannel.connect('ws://$ip:$port');
     channel?.sink.add("Hola servidor");
+    mensajes = await recuperarpersistencia(archivoJSONPath);
     conectado = true;
+    print(mensajes.toString());
     actualizar_texto_connectar();
     channel?.stream.listen((message) {
       // Manejar mensajes recibidos del servidor
@@ -214,7 +209,7 @@ class _MyHomePageState extends State<MyHomePage> {
         int? numeroAleatorio;
         numeroAleatorio = r.nextInt(901) + 100;
         newid = numeroAleatorio;
-      }else{
+      } else {
         newid = idrandom();
       }
       Mensaje mensajeobject = Mensaje(
@@ -222,9 +217,12 @@ class _MyHomePageState extends State<MyHomePage> {
           ip: miip.toString(),
           horaEnvio: DateTime.now(),
           texto: mensaje);
-
       mensajes.add(mensajeobject);
       await agregarDatosAlArchivo(mensajeobject.toJson(), archivoJSONPath);
+      setState(() {
+        conectado = true;
+        Lista(mensajes: mensajes);
+      });
     } else if (!checkmensajesrepetidos(mensaje)) {
       print("El mensaje no puede ser repetido");
     } else if (mensaje == "") {
@@ -259,14 +257,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   int idrandom() {
-  Random r = Random();
-  int? numeroAleatorio;
-  numeroAleatorio = r.nextInt(901) + 100;
-  for (var i = 0; i < mensajes.length; i++) {
-    if (mensajes[i].Id == numeroAleatorio) {
-      return idrandom();
+    Random r = Random();
+    int? numeroAleatorio;
+    numeroAleatorio = r.nextInt(901) + 100;
+    for (var i = 0; i < mensajes.length; i++) {
+      if (mensajes[i].Id == numeroAleatorio) {
+        return idrandom();
+      }
     }
+    return numeroAleatorio;
   }
-  return numeroAleatorio;
-}
 }
