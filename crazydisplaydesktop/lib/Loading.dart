@@ -1,3 +1,4 @@
+import 'package:crazydisplaydesktop/Main.dart';
 import 'package:flutter/material.dart';
 
 class LoadingOverlay {

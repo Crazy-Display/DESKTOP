@@ -138,7 +138,6 @@ class _MyHomePageState extends State<MyHomePage> {
                               if (!conectado) {
                                 channel = await connectToServer(
                                     ipserver, port, context);
-
                                 mensajes = await recuperarpersistencia(
                                     archivoJSONPath);
                               }
@@ -181,7 +180,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<IOWebSocketChannel> connectToServer(
       String ip, String port, BuildContext context) async {
     channel = await IOWebSocketChannel.connect('ws://$ipserver:$port');
-    channel.sink.add("Flutter user");
+    channel.sink.add("pong");
     channel.stream.listen((message) {
       print(message);
       if (message == "firstconnected") {
@@ -192,8 +191,9 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     }, onDone: () {
       // Manejar cuando la conexión se cierra
-      conectado = false;
+      
       setState(() {
+        conectado = false;
         actualizar_texto_connectar();
       });
     }, onError: (error) {
@@ -205,13 +205,17 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void disconnectToServer(String ip, String port) async {
-    channel?.sink.close();
+    channel.sink.close();
   }
 
   Future<void> enviarmensajeyguardararray() async {
     String mensaje = messageController.text;
-    if (checkmensajesrepetidos(mensaje)) {
-      channel.sink.add(mensaje);
+    if (checkmensajesrepetidos(mensaje) && mensaje != "") {
+
+      setState(() {
+        LoadingOverlay.show(context);
+        channel.sink.add(mensaje);
+      });
       messageController.clear();
       String miip = await obtenerDireccionIPLocal();
       int newid;
@@ -229,19 +233,21 @@ class _MyHomePageState extends State<MyHomePage> {
           horaEnvio: DateTime.now(),
           texto: mensaje);
       mensajes.add(mensajeobject);
-      
 
       await agregarDatosAlArchivo(mensajeobject.toJson(), archivoJSONPath);
+
       setState(() {
         conectado = true;
-        Lista(mensajes: mensajes);
       });
     } else if (!checkmensajesrepetidos(mensaje)) {
       print("El mensaje no puede ser repetido");
     } else if (mensaje == "") {
       print("No es posible enviar mensajes vacios.");
     }
+    
   }
+
+
 
   Future<String> obtenerDireccionIPLocal() async {
     try {
