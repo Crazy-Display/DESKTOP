@@ -1,4 +1,4 @@
-import 'package:crazydisplaydesktop/appdata.dart';
+import 'package:crazydisplaydesktop/Appdata.dart';
 import 'package:crazydisplaydesktop/mensaje.dart';
 import 'package:flutter/material.dart';
 
@@ -26,14 +26,12 @@ class _Lista extends State<Lista> {
         itemBuilder: (BuildContext context, int index) {
           return Container(
             margin: EdgeInsets.all(1),
-            padding: EdgeInsets.all(5),
+            padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10.0),
               color: Color.fromARGB(255, 205, 176, 255),
             ),
-            child: Center(
-                child: Text(mensajes[mensajes.length - index - 1].texto)),
-          );
+                child: Text(mensajes[mensajes.length - index - 1].texto));
         });
   }
 }

@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:crazydisplaydesktop/Dialogouser.dart';
 import 'package:crazydisplaydesktop/Lista.dart';
-import 'package:crazydisplaydesktop/appdata.dart';
+import 'package:crazydisplaydesktop/Appdata.dart';
+import 'package:crazydisplaydesktop/Loading.dart';
 import 'package:crazydisplaydesktop/mensaje.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/io.dart';
@@ -39,7 +41,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  IOWebSocketChannel? channel;
+  late IOWebSocketChannel channel;
 
   List<String> condes = ["Connect", "Disconnect"];
   List<Mensaje> mensajes = [];
@@ -105,7 +107,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Center(
           child: Container(
-        width: 300,
+        width: 600,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
         child: Column(
           children: <Widget>[
@@ -128,25 +130,31 @@ class _MyHomePageState extends State<MyHomePage> {
             Row(
               children: [
                 ElevatedButton(
-                    onPressed: () async {
-                      ipserver = ipController.text;
-                      if (esDireccionIP(ipserver)) {
-                        if (!conectado) {
-                          connectToServer(ipserver, port);
-                        } else if (conectado) {
+                    onPressed: !conectado
+                        ? () async {
+                            LoadingOverlay.show(context);
+                            ipserver = ipController.text;
+                            if (esDireccionIP(ipserver)) {
+                              if (!conectado) {
+                                channel = await connectToServer(
+                                    ipserver, port, context);
+
+                                mensajes = await recuperarpersistencia(
+                                    archivoJSONPath);
+                              }
+                            }
+                          }
+                        : null,
+                    child: Text("Conectar")),
+                Padding(padding: EdgeInsets.symmetric(horizontal: 8)),
+                ElevatedButton(
+                  onPressed: conectado
+                      ? () {
                           disconnectToServer(ipserver, port);
                         }
-                      }
-                    },
-                    child: conectado
-                        ? Text(
-                            "$actualtextconnect",
-                            style: TextStyle(color: Colors.red),
-                          )
-                        : Text(
-                            "$actualtextconnect",
-                            style: TextStyle(color: Colors.green),
-                          )),
+                      : null,
+                  child: Text("Desconectar"),
+                ),
                 Spacer(),
                 ElevatedButton(
                   onPressed: conectado
@@ -161,8 +169,7 @@ class _MyHomePageState extends State<MyHomePage> {
             SizedBox(height: 20),
             Expanded(
                 child: conectado
-                    ? Container(
-                        child: Lista(mensajes: mensajes))
+                    ? Container(child: Lista(mensajes: mensajes))
                     : Container()),
           ],
         ),
@@ -171,15 +178,18 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 /* AQUI EMPIEZAN FUNCIONES QUE UTILIZAREMOS PARA EL CORRECTO DESARROLLO DE LA APLICACIÓN*/
 
-  void connectToServer(String ip, String port) async {
-    channel = IOWebSocketChannel.connect('ws://$ip:$port');
-    channel?.sink.add("Hola servidor");
-    mensajes = await recuperarpersistencia(archivoJSONPath);
-    conectado = true;
-    print(mensajes.toString());
-    actualizar_texto_connectar();
-    channel?.stream.listen((message) {
-      // Manejar mensajes recibidos del servidor
+  Future<IOWebSocketChannel> connectToServer(
+      String ip, String port, BuildContext context) async {
+    channel = await IOWebSocketChannel.connect('ws://$ipserver:$port');
+    channel.sink.add("Flutter user");
+    channel.stream.listen((message) {
+      print(message);
+      if (message == "firstconnected") {
+        setState(() {
+          conectado = true;
+          LoadingOverlay.hide(context);
+        });
+      }
     }, onDone: () {
       // Manejar cuando la conexión se cierra
       conectado = false;
@@ -189,8 +199,9 @@ class _MyHomePageState extends State<MyHomePage> {
     }, onError: (error) {
       // Manejar errores de conexión
       print('Error de conexión: $error');
+      LoadingOverlay.hide(context);
     });
-    // Espera 5 segundos y verifica si la conexión se estableció
+    return channel;
   }
 
   void disconnectToServer(String ip, String port) async {
@@ -200,7 +211,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> enviarmensajeyguardararray() async {
     String mensaje = messageController.text;
     if (checkmensajesrepetidos(mensaje)) {
-      channel?.sink.add(mensaje);
+      channel.sink.add(mensaje);
       messageController.clear();
       String miip = await obtenerDireccionIPLocal();
       int newid;
@@ -218,6 +229,8 @@ class _MyHomePageState extends State<MyHomePage> {
           horaEnvio: DateTime.now(),
           texto: mensaje);
       mensajes.add(mensajeobject);
+      
+
       await agregarDatosAlArchivo(mensajeobject.toJson(), archivoJSONPath);
       setState(() {
         conectado = true;

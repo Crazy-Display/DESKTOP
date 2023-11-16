@@ -3,6 +3,7 @@ class Mensaje {
   String ip;
   DateTime horaEnvio;
   String texto;
+  String type = "flutter";
 
   Mensaje({
     required this.Id,
@@ -11,6 +12,7 @@ class Mensaje {
     required this.texto,
   });
 
+  //metodo que transforma un map a un objeto Mensaje
   factory Mensaje.fromJson(Map<String, dynamic> json) {
     return Mensaje(
       Id: json['Id'],
@@ -27,6 +29,7 @@ class Mensaje {
       'ip': ip,
       'horaEnvio': horaEnvio.toIso8601String(),
       'texto': texto,
+      'type': type,
     };
   }
 }
