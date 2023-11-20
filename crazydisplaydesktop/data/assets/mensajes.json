@@ -1,0 +1,37 @@
+[
+    {
+        "Id": 679,
+        "ip": "192.168.56.1",
+        "horaEnvio": "2023-11-20T17:47:24.602678",
+        "texto": "colacao",
+        "type": "texto"
+    },
+    {
+        "Id": 694,
+        "ip": "192.168.56.1",
+        "horaEnvio": "2023-11-20T17:53:01.751702",
+        "texto": "puta",
+        "type": "texto"
+    },
+    {
+        "Id": 287,
+        "ip": "192.168.56.1",
+        "horaEnvio": "2023-11-20T19:10:01.819016",
+        "texto": "cocacola",
+        "type": "texto"
+    },
+    {
+        "Id": 767,
+        "ip": "192.168.56.1",
+        "horaEnvio": "2023-11-20T19:19:05.676591",
+        "texto": "cocacola1",
+        "type": "image"
+    },
+    {
+        "Id": 739,
+        "ip": "192.168.56.1",
+        "horaEnvio": "2023-11-20T19:19:25.972490",
+        "texto": "penesito",
+        "type": "image"
+    }
+]

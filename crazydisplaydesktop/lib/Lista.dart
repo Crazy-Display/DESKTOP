@@ -2,7 +2,7 @@ import 'package:crazydisplaydesktop/mensaje.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:web_socket_channel/io.dart';
-import 'main.dart';
+import 'Main.dart';
 
 class Lista extends StatefulWidget {
   final List<Mensaje> mensajes;
@@ -56,7 +56,7 @@ class _Lista extends State<Lista> {
                     ],
                     onSelected: (Mensaje item) {
 
-                      enviarmensajealserver(context, channel, item.texto);
+                      channel.sink.add(mensajes[mensajes.length - index - 1].toJson().toString());
                       
 
                     },

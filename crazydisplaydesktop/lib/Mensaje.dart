@@ -3,13 +3,14 @@ class Mensaje {
   String ip;
   DateTime horaEnvio;
   String texto;
-  String type = "texto";
+  String type;
 
   Mensaje({
     required this.Id,
     required this.ip,
     required this.horaEnvio,
     required this.texto,
+    required this.type,
   });
 
   //metodo que transforma un map a un objeto Mensaje
@@ -19,6 +20,7 @@ class Mensaje {
       ip: json['ip'],
       horaEnvio: DateTime.parse(json['horaEnvio']),
       texto: json['texto'],
+      type: json['type']
     );
   }
 

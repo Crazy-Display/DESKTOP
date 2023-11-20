@@ -59,6 +59,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController messageController = TextEditingController();
 
   bool conectado = false;
+  bool usuariocorrecto = false;
 
   void conectardesconectar() {
     if (conectado) {
@@ -185,16 +186,20 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<IOWebSocketChannel> connectToServer(
       String ip, String port, BuildContext context) async {
-        LoadingOverlay.show(context);
+    LoadingOverlay.show(context);
     channel = await IOWebSocketChannel.connect('ws://$ipserver:$port');
-    channel.sink.add("flutter");
-    channel.stream.listen((message) {
-      print(message);
+    channel.stream.listen((message) async {
       if (message == "connected") {
-        setState(() {
-          conectado = true;
-          LoadingOverlay.hide(context);
-        });
+        LoadingOverlay.hide(context);
+        usuariocorrecto = await Dialogouser.mostrarDialogo(context);
+        if (usuariocorrecto) {
+          channel.sink.add("flutter");
+          setState(() {
+            conectado = true;
+          });
+        } else if (!usuariocorrecto) {
+          disconnectToServer(ip, port);
+        }
       }
     }, onDone: () {
       // Manejar cu ando la conexión se cierra
@@ -217,7 +222,6 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> enviarmensajeyguardararray() async {
     String mensaje = messageController.text;
     if (checkmensajesrepetidos(mensaje) && mensaje != "") {
-      enviarmensajealserver(context, channel, mensaje);
       messageController.clear();
       String miip = await obtenerDireccionIPLocal();
       int newid;
@@ -231,13 +235,15 @@ class _MyHomePageState extends State<MyHomePage> {
       }
       Mensaje mensajeobject = Mensaje(
           Id: newid,
-          ip: miip.toString(),
+          ip: miip,
           horaEnvio: DateTime.now(),
-          texto: mensaje);
-      mensajes.add(mensajeobject);
-
-      await agregarDatosAlArchivo(mensajeobject.toJson(), archivoJSONPath);
-
+          texto: mensaje,
+          type: "texto");
+      mensajes
+          .add(mensajeobject); //agrego el objeto mensaje al array de mensajes
+      await agregarDatosAlArchivo(mensajeobject.toJson(),
+          archivoJSONPath); //guardo el mensaje como json
+      channel.sink.add(mensajeobject.toJson().toString());
       setState(() {
         conectado = true;
       });
@@ -285,9 +291,4 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     return numeroAleatorio;
   }
-}
-
-void enviarmensajealserver(
-    BuildContext context, IOWebSocketChannel channel, String mensaje) {
-  channel.sink.add(mensaje);
 }
