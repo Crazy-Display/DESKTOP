@@ -137,7 +137,6 @@ class _MyHomePageState extends State<MyHomePage> {
                             print("marihuano");
                             ipserver = ipController.text;
                             if (esDireccionIP(ipserver)) {
-                              LoadingOverlay.show(context);
                               if (!conectado) {
                                 channel = await connectToServer(
                                     ipserver, port, context);
@@ -186,21 +185,19 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<IOWebSocketChannel> connectToServer(
       String ip, String port, BuildContext context) async {
+        LoadingOverlay.show(context);
     channel = await IOWebSocketChannel.connect('ws://$ipserver:$port');
-    enviarmensajealserver(context, channel, "fluutter");
-    enviarmensajealserver(context, channel, "pong");
-    LoadingOverlay.hide(context);
+    channel.sink.add("flutter");
     channel.stream.listen((message) {
       print(message);
-      if (message == "firstconnected") {
+      if (message == "connected") {
         setState(() {
           conectado = true;
           LoadingOverlay.hide(context);
         });
       }
     }, onDone: () {
-      // Manejar cuando la conexión se cierra
-
+      // Manejar cu ando la conexión se cierra
       setState(() {
         conectado = false;
         actualizar_texto_connectar();
@@ -292,6 +289,5 @@ class _MyHomePageState extends State<MyHomePage> {
 
 void enviarmensajealserver(
     BuildContext context, IOWebSocketChannel channel, String mensaje) {
-  LoadingOverlay.show(context);
   channel.sink.add(mensaje);
 }

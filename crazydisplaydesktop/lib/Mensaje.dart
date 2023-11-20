@@ -3,7 +3,7 @@ class Mensaje {
   String ip;
   DateTime horaEnvio;
   String texto;
-  String type = "flutter";
+  String type = "texto";
 
   Mensaje({
     required this.Id,
