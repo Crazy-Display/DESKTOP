@@ -2,6 +2,8 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:crazydisplaydesktop/Dialogouser.dart';
+
+import 'lib/Dialogouser.dart';
 import 'package:crazydisplaydesktop/Lista.dart';
 import 'package:crazydisplaydesktop/Appdata.dart';
 import 'package:crazydisplaydesktop/Loading.dart';
@@ -132,9 +134,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 ElevatedButton(
                     onPressed: !conectado
                         ? () async {
-                            LoadingOverlay.show(context);
+                            print("marihuano");
                             ipserver = ipController.text;
                             if (esDireccionIP(ipserver)) {
+                              LoadingOverlay.show(context);
                               if (!conectado) {
                                 channel = await connectToServer(
                                     ipserver, port, context);
@@ -168,7 +171,11 @@ class _MyHomePageState extends State<MyHomePage> {
             SizedBox(height: 20),
             Expanded(
                 child: conectado
-                    ? Container(child: Lista(mensajes: mensajes))
+                    ? Container(
+                        child: Lista(
+                        mensajes: mensajes,
+                        channel: channel,
+                      ))
                     : Container()),
           ],
         ),
@@ -180,7 +187,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<IOWebSocketChannel> connectToServer(
       String ip, String port, BuildContext context) async {
     channel = await IOWebSocketChannel.connect('ws://$ipserver:$port');
-    channel.sink.add("pong");
+    enviarmensajealserver(context, channel, "fluutter");
+    enviarmensajealserver(context, channel, "pong");
+    LoadingOverlay.hide(context);
     channel.stream.listen((message) {
       print(message);
       if (message == "firstconnected") {
@@ -191,7 +200,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     }, onDone: () {
       // Manejar cuando la conexión se cierra
-      
+
       setState(() {
         conectado = false;
         actualizar_texto_connectar();
@@ -211,11 +220,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> enviarmensajeyguardararray() async {
     String mensaje = messageController.text;
     if (checkmensajesrepetidos(mensaje) && mensaje != "") {
-
-      setState(() {
-        LoadingOverlay.show(context);
-        channel.sink.add(mensaje);
-      });
+      enviarmensajealserver(context, channel, mensaje);
       messageController.clear();
       String miip = await obtenerDireccionIPLocal();
       int newid;
@@ -244,10 +249,7 @@ class _MyHomePageState extends State<MyHomePage> {
     } else if (mensaje == "") {
       print("No es posible enviar mensajes vacios.");
     }
-    
   }
-
-
 
   Future<String> obtenerDireccionIPLocal() async {
     try {
@@ -286,4 +288,10 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     return numeroAleatorio;
   }
+}
+
+void enviarmensajealserver(
+    BuildContext context, IOWebSocketChannel channel, String mensaje) {
+  LoadingOverlay.show(context);
+  channel.sink.add(mensaje);
 }
