@@ -56,7 +56,7 @@ class _Lista extends State<Lista> {
                     ],
                     onSelected: (Mensaje item) {
 
-                      channel.sink.add(mensajes[mensajes.length - index - 1].toJson().toString());
+                      channel.sink.add(mensajes[mensajes.length - index - 1].toString());
                       
 
                     },

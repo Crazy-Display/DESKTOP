@@ -2,12 +2,12 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:crazydisplaydesktop/Dialogouser.dart';
-
-import 'lib/Dialogouser.dart';
+import 'package:crazydisplaydesktop/Utils.dart';
 import 'package:crazydisplaydesktop/Lista.dart';
 import 'package:crazydisplaydesktop/Appdata.dart';
 import 'package:crazydisplaydesktop/Loading.dart';
 import 'package:crazydisplaydesktop/mensaje.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/io.dart';
 
@@ -54,12 +54,15 @@ class _MyHomePageState extends State<MyHomePage> {
   String messagetextform = "";
   String iptextform = "";
   String port = "8888";
+  String? imagePath;
+  static String userpass = "";
 
   final TextEditingController ipController = TextEditingController();
   final TextEditingController messageController = TextEditingController();
 
   bool conectado = false;
   bool usuariocorrecto = false;
+  bool imagencargada = false;
 
   void conectardesconectar() {
     if (conectado) {
@@ -100,6 +103,10 @@ class _MyHomePageState extends State<MyHomePage> {
     return true;
   }
 
+  static void userpassadd(String newuser) {
+    userpass = newuser;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -110,7 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Center(
           child: Container(
-        width: 600,
+        width: 700,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
         child: Column(
           children: <Widget>[
@@ -135,7 +142,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 ElevatedButton(
                     onPressed: !conectado
                         ? () async {
-                            print("marihuano");
                             ipserver = ipController.text;
                             if (esDireccionIP(ipserver)) {
                               if (!conectado) {
@@ -165,6 +171,27 @@ class _MyHomePageState extends State<MyHomePage> {
                         }
                       : null,
                   child: Text('Send'),
+                ),
+                Padding(padding: EdgeInsets.symmetric(horizontal: 8)),
+                ElevatedButton(
+                  onPressed: imagencargada ? () {} : null,
+                  child: Text('Send image'),
+                ),
+                Padding(padding: EdgeInsets.symmetric(horizontal: 8)),
+                ElevatedButton(
+                  onPressed: conectado
+                      ? () async {
+                          FilePickerResult? result = await openFilePicker();
+                          if (result != null) {
+                            setState(() {
+                              imagePath = result.files.single.path!;
+                              conectado = true;
+                            });
+                          }
+                          print(imagePath);
+                        }
+                      : null,
+                  child: Text('Upload'),
                 )
               ],
             ),
@@ -189,11 +216,12 @@ class _MyHomePageState extends State<MyHomePage> {
     LoadingOverlay.show(context);
     channel = await IOWebSocketChannel.connect('ws://$ipserver:$port');
     channel.stream.listen((message) async {
-      if (message == "connected") {
+      if (message == "Connected") {
         LoadingOverlay.hide(context);
-        usuariocorrecto = await Dialogouser.mostrarDialogo(context);
+        userpass = (await MyDialog.mostrarDialogo(context))!;
+        usuariocorrecto = true;
         if (usuariocorrecto) {
-          channel.sink.add("flutter");
+          channel.sink.add("Fluutter");
           setState(() {
             conectado = true;
           });
@@ -243,7 +271,8 @@ class _MyHomePageState extends State<MyHomePage> {
           .add(mensajeobject); //agrego el objeto mensaje al array de mensajes
       await agregarDatosAlArchivo(mensajeobject.toJson(),
           archivoJSONPath); //guardo el mensaje como json
-      channel.sink.add(mensajeobject.toJson().toString());
+      channel.sink.add(mensajeobject.toString());
+      print(mensajeobject.toString());
       setState(() {
         conectado = true;
       });
@@ -252,23 +281,6 @@ class _MyHomePageState extends State<MyHomePage> {
     } else if (mensaje == "") {
       print("No es posible enviar mensajes vacios.");
     }
-  }
-
-  Future<String> obtenerDireccionIPLocal() async {
-    try {
-      for (var interface in await NetworkInterface.list()) {
-        for (var addr in interface.addresses) {
-          // Verifica si la dirección es IPv4 y no es la dirección loopback
-          if (addr.type == InternetAddressType.IPv4 && !addr.isLoopback) {
-            return addr.address;
-          }
-        }
-      }
-    } catch (e) {
-      print('Error al obtener la dirección IP local: $e');
-    }
-
-    return 'No se pudo obtener la dirección IP local';
   }
 
   bool checkmensajesrepetidos(String mensaje) {

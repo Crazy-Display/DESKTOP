@@ -1,49 +1,57 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:web_socket_channel/io.dart';
 
-class Dialogouser extends StatelessWidget {
-  const Dialogouser({Key? key}) : super(key: key);
+class MyDialog {
+  static Future<String?> mostrarDialogo(BuildContext context) async {
+    final TextEditingController userController = TextEditingController();
+    final TextEditingController passController = TextEditingController();
 
-  static Future<bool> mostrarDialogo(BuildContext context) async {
-    bool oyente = false;
-    bool cerrar = false;
+    Completer<String?> completer = Completer<String?>();
 
     showDialog<String>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) => AlertDialog(
-        title: const Text('Identificate'),
+        title: const Text('Ingrese Usuario y Contraseña'),
         content: SingleChildScrollView(
-            child: Column(
-          children: [
-            TextFormField(
-              decoration: const InputDecoration(
-                border: UnderlineInputBorder(),
-                labelText: 'Usuario',
+          child: Column(
+            children: [
+              TextFormField(
+                controller: userController,
+                decoration: const InputDecoration(
+                  border: UnderlineInputBorder(),
+                  labelText: 'Usuario',
+                ),
               ),
-            ),
-            SizedBox(height: 16),
-            TextFormField(
-              obscureText: true,
-              decoration: const InputDecoration(
-                border: UnderlineInputBorder(),
-                labelText: 'Contraseña',
+              SizedBox(height: 16),
+              TextFormField(
+                controller: passController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  border: UnderlineInputBorder(),
+                  labelText: 'Contraseña',
+                ),
               ),
-            ),
-          ],
-        )),
+            ],
+          ),
+        ),
         actions: <Widget>[
           TextButton(
             onPressed: () {
-              cerrar = true;
               Navigator.of(context).pop(); // Cierra el diálogo
+              completer.complete(null); // Resuelve el Future con null
             },
-            child: const Text('Cerrar'),
+            child: const Text('Cancelar'),
           ),
           TextButton(
             onPressed: () {
-              oyente = true;
+              String usuario = userController.text;
+              String contrasenya = passController.text;
+              String resultado = '$usuario;$contrasenya';
+
               Navigator.of(context).pop(); // Cierra el diálogo
+              completer.complete(resultado); // Resuelve el Future con el resultado
             },
             child: const Text('Enviar'),
           ),
@@ -51,22 +59,6 @@ class Dialogouser extends StatelessWidget {
       ),
     );
 
-    while (oyente == false) {
-      await Future.delayed(Duration(seconds: 2));
-      print("funcionando dialogo");
-      if (cerrar == true) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return TextButton(
-      onPressed: () => mostrarDialogo(context),
-      child: const Text('Show Dialog'),
-    );
+    return completer.future;
   }
 }

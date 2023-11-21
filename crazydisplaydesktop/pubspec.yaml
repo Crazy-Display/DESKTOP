@@ -32,6 +32,7 @@ dependencies:
   flutter:
     sdk: flutter
   web_socket_channel: ^2.2.0
+  file_picker: ^4.0.0
 
 
 

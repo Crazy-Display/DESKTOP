@@ -16,12 +16,11 @@ class Mensaje {
   //metodo que transforma un map a un objeto Mensaje
   factory Mensaje.fromJson(Map<String, dynamic> json) {
     return Mensaje(
-      Id: json['Id'],
-      ip: json['ip'],
-      horaEnvio: DateTime.parse(json['horaEnvio']),
-      texto: json['texto'],
-      type: json['type']
-    );
+        Id: json['Id'],
+        ip: json['ip'],
+        horaEnvio: DateTime.parse(json['horaEnvio']),
+        texto: json['texto'],
+        type: json['type']);
   }
 
   // Método para convertir el objeto a un mapa (JSON)
@@ -34,6 +33,9 @@ class Mensaje {
       'type': type,
     };
   }
+
+  @override
+  String toString() {
+    return "{\"Id\":\"$Id\",\"ip\":\"$ip\",\"horaEnvio\":\"$horaEnvio\",\"texto\":\"$texto\",\"type\":\"$type\"}";
+  }
 }
-
-
