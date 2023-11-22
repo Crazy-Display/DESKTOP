@@ -48,8 +48,8 @@ class MyDialog {
             onPressed: () {
               String usuario = userController.text;
               String contrasenya = passController.text;
-              String resultado = '$usuario;$contrasenya';
-
+              String resultado = '{"type":"verification","username":"$usuario","password":"$contrasenya"}';
+              
               Navigator.of(context).pop(); // Cierra el diálogo
               completer.complete(resultado); // Resuelve el Future con el resultado
             },

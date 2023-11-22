@@ -216,19 +216,23 @@ class _MyHomePageState extends State<MyHomePage> {
     LoadingOverlay.show(context);
     channel = await IOWebSocketChannel.connect('ws://$ipserver:$port');
     channel.stream.listen((message) async {
-      if (message == "Connected") {
+      if (message == "Connected" && userpass == "") {
         LoadingOverlay.hide(context);
         userpass = (await MyDialog.mostrarDialogo(context))!;
-        usuariocorrecto = true;
-        if (usuariocorrecto) {
-          channel.sink.add("Fluutter");
-          setState(() {
-            conectado = true;
-          });
-        } else if (!usuariocorrecto) {
-          disconnectToServer(ip, port);
-        }
+        channel.sink.add(userpass);
       }
+      print(message);
+      
+      if (message == "OK") {
+        usuariocorrecto = true;
+        channel.sink.add("Fluutter");
+        setState(() {
+          conectado = true;
+        });
+      }else if(message == "NOTOK"){
+        disconnectToServer(ip, port);
+      }
+  
     }, onDone: () {
       // Manejar cu ando la conexión se cierra
       setState(() {
@@ -245,6 +249,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void disconnectToServer(String ip, String port) async {
     channel.sink.close();
+    userpass = "";
   }
 
   Future<void> enviarmensajeyguardararray() async {
