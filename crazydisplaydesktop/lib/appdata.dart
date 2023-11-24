@@ -35,4 +35,51 @@ Future<List<Mensaje>> recuperarpersistencia(String archivoJSONPath) async {
   return newlista;
 }
 
+List<String> recogernombresdelasfotos(){
+  List<String> lista = [];
+  String filePath = 'data/assets/images/imagenes.json';
 
+  try {
+    // Intenta leer el contenido del archivo
+    String jsonString = File(filePath).readAsStringSync();
+    // Decodifica el JSON a una lista de cadenas
+    List<dynamic> jsonList = jsonDecode(jsonString);
+    // Itera sobre los elementos JSON y agrega las rutas a la lista
+    for (dynamic element in jsonList) {
+      String path = element['path'];
+      lista.add(path);
+    }
+  } catch (e) {
+    // Maneja cualquier error que pueda ocurrir al leer el archivo
+    print('Error al leer el archivo: $e');
+  }
+  return lista;
+}
+
+void subirimagenajson(String imgpath) {
+  // Ruta del archivo JSON
+  String filePath = 'data/assets/images/imagenes.json';
+
+  try {
+    // Lee el contenido actual del archivo
+    String jsonString = File(filePath).readAsStringSync();
+
+    // Decodifica el contenido del JSON a una lista de objetos
+    List<dynamic> jsonList = jsonDecode(jsonString);
+
+    // Añade un nuevo objeto a la lista
+    jsonList.add({"path": imgpath});
+
+    // Codifica la lista a formato JSON
+    String nuevoJsonString = jsonEncode(jsonList);
+
+    // Escribe el nuevo contenido de vuelta al archivo
+    File(filePath).writeAsStringSync(nuevoJsonString);
+
+    print('Imagen añadida con éxito al archivo JSON.');
+
+  } catch (e) {
+    // Maneja cualquier error que pueda ocurrir al leer o escribir el archivo
+    print('Error al manipular el archivo JSON: $e');
+  }
+}

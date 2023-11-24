@@ -48,8 +48,7 @@ class MyDialog {
             onPressed: () {
               String usuario = userController.text;
               String contrasenya = passController.text;
-              String resultado = '{"type":"verification","username":"$usuario","password":"$contrasenya"}';
-              
+              String resultado = '{"type":"verify","username":"$usuario","password":"$contrasenya","from":"flutter"}';
               Navigator.of(context).pop(); // Cierra el diálogo
               completer.complete(resultado); // Resuelve el Future con el resultado
             },

@@ -2,14 +2,17 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:crazydisplaydesktop/Dialogouser.dart';
+import 'package:crazydisplaydesktop/Drawer.dart';
 import 'package:crazydisplaydesktop/Utils.dart';
 import 'package:crazydisplaydesktop/Lista.dart';
 import 'package:crazydisplaydesktop/Appdata.dart';
 import 'package:crazydisplaydesktop/Loading.dart';
 import 'package:crazydisplaydesktop/mensaje.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:web_socket_channel/io.dart';
+// ignore: depend_on_referenced_packages
+import 'package:path/path.dart';
 
 void main() {
   runApp(const MyApp());
@@ -64,21 +67,16 @@ class _MyHomePageState extends State<MyHomePage> {
   bool usuariocorrecto = false;
   bool imagencargada = false;
 
-  void conectardesconectar() {
-    if (conectado) {
-      conectado = false;
-    } else if (!conectado) {
-      conectado = true;
-    }
+  void conectarDesconectar() {
+    setState(() {
+      conectado = !conectado;
+      actualizarTextoConnectar();
+    });
   }
 
-  void actualizar_texto_connectar() {
+  void actualizarTextoConnectar() {
     setState(() {
-      if (conectado == true) {
-        actualtextconnect = condes[1];
-      } else if (conectado == false) {
-        actualtextconnect = condes[0];
-      }
+      actualtextconnect = conectado ? condes[1] : condes[0];
     });
   }
 
@@ -114,6 +112,9 @@ class _MyHomePageState extends State<MyHomePage> {
         centerTitle: true,
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
+      ),
+      drawer: MyDrawer(
+        connected: conectado,
       ),
       body: Center(
           child: Container(
@@ -174,21 +175,36 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 Padding(padding: EdgeInsets.symmetric(horizontal: 8)),
                 ElevatedButton(
-                  onPressed: imagencargada ? () {} : null,
-                  child: Text('Send image'),
+                  onPressed: imagencargada
+                      ? () {
+                          setState(() {
+                            imagencargada = false;
+                          });
+                        }
+                      : null,
+                  child: Text('Send current image'),
                 ),
                 Padding(padding: EdgeInsets.symmetric(horizontal: 8)),
                 ElevatedButton(
                   onPressed: conectado
                       ? () async {
-                          FilePickerResult? result = await openFilePicker();
-                          if (result != null) {
+                          XFile? imageFile = await ImagePicker()
+                              .pickImage(source: ImageSource.gallery);
+                          if (imageFile != null) {
+                            imagePath = imageFile.path;
+                            conectado = true;
+
+                            // Convierte la ruta relativa a absoluta si es necesario
+                            String absolutePath = join(Directory.current.path,
+                                imagePath?.replaceAll('\\', '/'));
+
+                            // Ahora puedes usar 'absolutePath' para abrir o manipular el archivo
+                            subirimagenajson(absolutePath);
+                            showSnackbar(context, "$absolutePath add to gallery! is the current image!");
                             setState(() {
-                              imagePath = result.files.single.path!;
-                              conectado = true;
+                              imagencargada = true;
                             });
                           }
-                          print(imagePath);
                         }
                       : null,
                   child: Text('Upload'),
@@ -222,22 +238,21 @@ class _MyHomePageState extends State<MyHomePage> {
         channel.sink.add(userpass);
       }
       print(message);
-      
+
       if (message == "OK") {
         usuariocorrecto = true;
         channel.sink.add("Fluutter");
         setState(() {
           conectado = true;
         });
-      }else if(message == "NOTOK"){
+      } else if (message == "NOTOK") {
         disconnectToServer(ip, port);
       }
-  
     }, onDone: () {
       // Manejar cu ando la conexión se cierra
       setState(() {
         conectado = false;
-        actualizar_texto_connectar();
+        actualizarTextoConnectar();
       });
     }, onError: (error) {
       // Manejar errores de conexión
