@@ -1,3 +1,4 @@
+import 'package:crazydisplaydesktop/Utils.dart';
 import 'package:crazydisplaydesktop/mensaje.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -55,10 +56,9 @@ class _Lista extends State<Lista> {
                       ),
                     ],
                     onSelected: (Mensaje item) {
-
-                      channel.sink.add(mensajes[mensajes.length - index - 1].toString());
-                      
-
+                      channel.sink.add(
+                          mensajes[mensajes.length - index - 1].toString());
+                      showSnackbar(context, "Sending...");
                     },
                   ),
                   Positioned(

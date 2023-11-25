@@ -168,7 +168,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ElevatedButton(
                   onPressed: conectado
                       ? () {
-                          enviarmensajeyguardararray();
+                          enviarmensajeyguardararray(context);
                         }
                       : null,
                   child: Text('Send'),
@@ -199,8 +199,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 imagePath?.replaceAll('\\', '/'));
 
                             // Ahora puedes usar 'absolutePath' para abrir o manipular el archivo
-                            subirimagenajson(absolutePath);
-                            showSnackbar(context, "$absolutePath add to gallery! is the current image!");
+                            subirimagenajson(context, absolutePath);
                             setState(() {
                               imagencargada = true;
                             });
@@ -232,6 +231,7 @@ class _MyHomePageState extends State<MyHomePage> {
     LoadingOverlay.show(context);
     channel = await IOWebSocketChannel.connect('ws://$ipserver:$port');
     channel.stream.listen((message) async {
+      channel.sink.add("pong");
       if (message == "Connected" && userpass == "") {
         LoadingOverlay.hide(context);
         userpass = (await MyDialog.mostrarDialogo(context))!;
@@ -242,6 +242,7 @@ class _MyHomePageState extends State<MyHomePage> {
       if (message == "OK") {
         usuariocorrecto = true;
         channel.sink.add("Fluutter");
+        showSnackbar(context, "Connected to server crazy display!");
         setState(() {
           conectado = true;
         });
@@ -258,6 +259,7 @@ class _MyHomePageState extends State<MyHomePage> {
       // Manejar errores de conexión
       print('Error de conexión: $error');
       LoadingOverlay.hide(context);
+      showSnackbar(context, "Connection could not be accessed.");
     });
     return channel;
   }
@@ -267,9 +269,9 @@ class _MyHomePageState extends State<MyHomePage> {
     userpass = "";
   }
 
-  Future<void> enviarmensajeyguardararray() async {
+  Future<void> enviarmensajeyguardararray(BuildContext context) async {
     String mensaje = messageController.text;
-    if (checkmensajesrepetidos(mensaje) && mensaje != "") {
+    if (checkmensajesrepetidos(mensaje, mensajes) && mensaje != "") {
       messageController.clear();
       String miip = await obtenerDireccionIPLocal();
       int newid;
@@ -293,23 +295,16 @@ class _MyHomePageState extends State<MyHomePage> {
           archivoJSONPath); //guardo el mensaje como json
       channel.sink.add(mensajeobject.toString());
       print(mensajeobject.toString());
+      showSnackbar(context, "Sending...");
+      await Future.delayed(Duration(seconds: 1));
       setState(() {
         conectado = true;
       });
-    } else if (!checkmensajesrepetidos(mensaje)) {
+    } else if (!checkmensajesrepetidos(mensaje, mensajes)) {
       print("El mensaje no puede ser repetido");
     } else if (mensaje == "") {
       print("No es posible enviar mensajes vacios.");
     }
-  }
-
-  bool checkmensajesrepetidos(String mensaje) {
-    for (var i = 0; i < mensajes.length; i++) {
-      if (mensajes[i].texto == mensaje) {
-        return false;
-      }
-    }
-    return true;
   }
 
   int idrandom() {

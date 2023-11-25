@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'Mensaje.dart';
 
 Future<String> obtenerDireccionIPLocal() async {
   try {
@@ -35,3 +36,12 @@ void showSnackbar(BuildContext context, String message) {
     ),
   );
 }
+
+bool checkmensajesrepetidos(String mensaje, List<dynamic> mensajes) {
+    for (var i = 0; i < mensajes.length; i++) {
+      if (mensajes[i].texto == mensaje) {
+        return false;
+      }
+    }
+    return true;
+  }
