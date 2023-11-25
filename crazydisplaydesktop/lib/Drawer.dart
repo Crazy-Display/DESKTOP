@@ -6,19 +6,21 @@ import 'Appdata.dart';
 
 class MyDrawer extends StatefulWidget {
   final bool connected;
+  final IOWebSocketChannel channel;
 
   // Constructor que recibe el booleano
-  MyDrawer({required this.connected});
+  MyDrawer({required this.connected, required this.channel});
 
   @override
   _MyDrawerState createState() =>
-      _MyDrawerState(connected: connected);
+      _MyDrawerState(connected: connected, channel: channel);
 }
 
 class _MyDrawerState extends State<MyDrawer> {
   final bool connected;
+  final IOWebSocketChannel channel;
 
-  _MyDrawerState({required this.connected});
+  _MyDrawerState({required this.connected, required this.channel});
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +46,7 @@ class _MyDrawerState extends State<MyDrawer> {
           ListTile(
               title: const Text('Current images'),
               onTap: () {
+                channel.sink.add("data");
                 String textf = "";
                 List<String> imagenes = recogernombresdelasfotos();
                 if (imagenes.isEmpty || connected == false) {
@@ -64,7 +67,8 @@ class _MyDrawerState extends State<MyDrawer> {
                     context,
                     MaterialPageRoute(
                         builder: (context) => LayoutGaleria(
-                              imagenes: imagenes
+                              imagenes: imagenes,
+                              channel: channel,
                             )),
                   );
                 }

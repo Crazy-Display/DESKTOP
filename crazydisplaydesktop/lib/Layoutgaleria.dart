@@ -1,24 +1,26 @@
 import 'dart:io';
 
+import 'package:crazydisplaydesktop/Utils.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/io.dart';
 import 'appdata.dart';
 
 class LayoutGaleria extends StatefulWidget {
   List<String> imagenes;
+  final IOWebSocketChannel channel;
 
-  LayoutGaleria({required this.imagenes});
+  LayoutGaleria({required this.imagenes, required this.channel});
 
   @override
-  _LayoutGaleriaState createState() => _LayoutGaleriaState();
+  _LayoutGaleriaState createState() => _LayoutGaleriaState(channel);
 }
 
 class _LayoutGaleriaState extends State<LayoutGaleria> {
+  final IOWebSocketChannel channel;
 
-  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
-      GlobalKey<RefreshIndicatorState>();
+  _LayoutGaleriaState(this.channel);
 
- @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -26,7 +28,6 @@ class _LayoutGaleriaState extends State<LayoutGaleria> {
       ),
       // Utiliza RefreshIndicator para envolver el GridView
       body: RefreshIndicator(
-        key: _refreshIndicatorKey,
         onRefresh: _refreshPage,
         child: GridView.builder(
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -65,8 +66,11 @@ class _LayoutGaleriaState extends State<LayoutGaleria> {
                 leading: Icon(Icons.send),
                 title: Text('Send'),
                 onTap: () {
+                  String stringbase64 = imageToBase64(imagePath);
+                  channel.sink.add(stringbase64);
                   // Implementa la lógica de editar aquí
                   Navigator.pop(context);
+                  showSnackbar(context, "Sending image...");
                 },
               ),
               ListTile(

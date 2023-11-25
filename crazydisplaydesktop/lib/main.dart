@@ -113,9 +113,12 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      drawer: MyDrawer(
-        connected: conectado,
-      ),
+      drawer: conectado
+          ? MyDrawer(
+              connected: conectado,
+              channel: channel,
+            )
+          : null,
       body: Center(
           child: Container(
         width: 700,
@@ -175,7 +178,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 Padding(padding: EdgeInsets.symmetric(horizontal: 8)),
                 ElevatedButton(
-                  onPressed: imagencargada
+                  onPressed: imagencargada && conectado
                       ? () {
                           setState(() {
                             imagencargada = false;
@@ -301,9 +304,9 @@ class _MyHomePageState extends State<MyHomePage> {
         conectado = true;
       });
     } else if (!checkmensajesrepetidos(mensaje, mensajes)) {
-      print("El mensaje no puede ser repetido");
+      showSnackbar(context, "cannot repeat the message.");
     } else if (mensaje == "") {
-      print("No es posible enviar mensajes vacios.");
+      showSnackbar(context, "it is not possible to send an empty message.");
     }
   }
 
