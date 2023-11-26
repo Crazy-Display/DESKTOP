@@ -66,8 +66,9 @@ class _LayoutGaleriaState extends State<LayoutGaleria> {
                 leading: Icon(Icons.send),
                 title: Text('Send'),
                 onTap: () {
-                  String stringbase64 = imageToBase64(imagePath);
-                  channel.sink.add(stringbase64);
+                  String imgbase = imageToBase64(imagePath!);
+                  channel.sink
+                      .add("{\"type\":\"image\",\"code\":\"$imgbase\"}");
                   // Implementa la lógica de editar aquí
                   Navigator.pop(context);
                   showSnackbar(context, "Sending image...");
@@ -80,6 +81,7 @@ class _LayoutGaleriaState extends State<LayoutGaleria> {
                   // Implementa la lógica de eliminar aquí
                   eliminarimagen(context, imagePath);
                   _refreshPage();
+                  showSnackbar(context, "Deleting...");
                   Navigator.pop(context);
                 },
               ),

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -50,6 +51,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<String> condes = ["Connect", "Disconnect"];
   List<Mensaje> mensajes = [];
+  List<String> usernames = [];
 
   String archivoJSONPath = 'data/assets/mensajes.json';
   String actualtextconnect = "Connect";
@@ -80,27 +82,6 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  bool esDireccionIP(String cadena) {
-    List<String> partes = cadena.split('.');
-
-    if (partes.length != 4) {
-      return false;
-    }
-
-    for (var parte in partes) {
-      try {
-        int valor = int.parse(parte);
-        if (valor < 0 || valor > 255) {
-          return false;
-        }
-      } catch (e) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   static void userpassadd(String newuser) {
     userpass = newuser;
   }
@@ -117,6 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ? MyDrawer(
               connected: conectado,
               channel: channel,
+              usernames: usernames,
             )
           : null,
       body: Center(
@@ -135,6 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
             SizedBox(height: 20), // Espacio entre los TextFormFields
             TextFormField(
               controller: messageController,
+              enabled: conectado, // Habilitar cuando conectado es true
               decoration: const InputDecoration(
                 border: UnderlineInputBorder(),
                 labelText: 'Message',
@@ -180,6 +163,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 ElevatedButton(
                   onPressed: imagencargada && conectado
                       ? () {
+                          String imgbase = imageToBase64(imagePath!);
+                          channel.sink.add(
+                              "{\"type\":\"image\",\"code\":\"$imgbase\"}");
+                          showSnackbar(context, "Sending image...");
                           setState(() {
                             imagencargada = false;
                           });
@@ -235,22 +222,41 @@ class _MyHomePageState extends State<MyHomePage> {
     channel = await IOWebSocketChannel.connect('ws://$ipserver:$port');
     channel.stream.listen((message) async {
       channel.sink.add("pong");
-      if (message == "Connected" && userpass == "") {
-        LoadingOverlay.hide(context);
-        userpass = (await MyDialog.mostrarDialogo(context))!;
-        channel.sink.add(userpass);
-      }
-      print(message);
+      try {
+        // Intenta decodificar la cadena como JSON
+        dynamic json = jsonDecode(message);
+        if (json["type"] == "users") {
+          usernames = [];
+          for (var element in json["usersFlutter"]) {
+            usernames.add(element + " - Flutter");
+          }
+          for (var element in json["usersApp"]) {
+            usernames.add(element + " - App");
+          }
+          setState(() {
+            usernames;
+          });
+        }
 
-      if (message == "OK") {
-        usuariocorrecto = true;
-        channel.sink.add("Fluutter");
-        showSnackbar(context, "Connected to server crazy display!");
-        setState(() {
-          conectado = true;
-        });
-      } else if (message == "NOTOK") {
-        disconnectToServer(ip, port);
+        // Si no se lanza una excepción, la cadena es un JSON válido
+      } catch (e) {
+        if (message == "Connected" && userpass == "") {
+          LoadingOverlay.hide(context);
+          userpass = (await MyDialog.mostrarDialogo(context))!;
+          channel.sink.add(userpass);
+        }
+        print(message);
+
+        if (message == "OK") {
+          usuariocorrecto = true;
+          channel.sink.add("Fluutter");
+          showSnackbar(context, "Connected to server crazy display!");
+          setState(() {
+            conectado = true;
+          });
+        } else if (message == "NOTOK") {
+          disconnectToServer(ip, port);
+        }
       }
     }, onDone: () {
       // Manejar cu ando la conexión se cierra
@@ -297,7 +303,6 @@ class _MyHomePageState extends State<MyHomePage> {
       await agregarDatosAlArchivo(mensajeobject.toJson(),
           archivoJSONPath); //guardo el mensaje como json
       channel.sink.add(mensajeobject.toString());
-      print(mensajeobject.toString());
       showSnackbar(context, "Sending...");
       await Future.delayed(Duration(seconds: 1));
       setState(() {

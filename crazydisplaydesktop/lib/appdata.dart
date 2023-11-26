@@ -90,7 +90,6 @@ void subirimagenajson(BuildContext context, String imgpath) {
     String nuevoJsonString = jsonEncode(jsonList);
 
     File(filePath).writeAsStringSync(nuevoJsonString);
-    print("object");
 
     showSnackbar(context, "$imgpath add to gallery! is the current image!");
   } catch (e) {

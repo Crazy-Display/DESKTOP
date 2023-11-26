@@ -32,7 +32,7 @@ void showSnackbar(BuildContext context, String message) {
     SnackBar(
       content: Text(message),
       duration:
-          Duration(seconds: 3), // Ajusta la duración según tus necesidades
+          Duration(seconds: 1), // Ajusta la duración según tus necesidades
     ),
   );
 }
@@ -43,5 +43,26 @@ bool checkmensajesrepetidos(String mensaje, List<dynamic> mensajes) {
         return false;
       }
     }
+    return true;
+  }
+
+bool esDireccionIP(String cadena) {
+    List<String> partes = cadena.split('.');
+
+    if (partes.length != 4) {
+      return false;
+    }
+
+    for (var parte in partes) {
+      try {
+        int valor = int.parse(parte);
+        if (valor < 0 || valor > 255) {
+          return false;
+        }
+      } catch (e) {
+        return false;
+      }
+    }
+
     return true;
   }
