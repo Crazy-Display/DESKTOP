@@ -13,7 +13,7 @@ class MyDialog {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) => AlertDialog(
-        title: const Text('Ingrese Usuario y Contraseña'),
+        title: const Text('Log in'),
         content: SingleChildScrollView(
           child: Column(
             children: [
@@ -21,7 +21,7 @@ class MyDialog {
                 controller: userController,
                 decoration: const InputDecoration(
                   border: UnderlineInputBorder(),
-                  labelText: 'Usuario',
+                  labelText: 'Username',
                 ),
               ),
               SizedBox(height: 16),
@@ -30,7 +30,7 @@ class MyDialog {
                 obscureText: true,
                 decoration: const InputDecoration(
                   border: UnderlineInputBorder(),
-                  labelText: 'Contraseña',
+                  labelText: 'Password',
                 ),
               ),
             ],
