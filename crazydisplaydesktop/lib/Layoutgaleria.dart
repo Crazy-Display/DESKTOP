@@ -68,7 +68,7 @@ class _LayoutGaleriaState extends State<LayoutGaleria> {
                 onTap: () {
                   String imgbase = imageToBase64(imagePath!);
                   channel.sink
-                      .add("{\"type\":\"image\",\"code\":\"$imgbase\"}");
+                      .add("{\"type\":\"image\",\"image\":\"$imgbase\"}");
                   // Implementa la lógica de editar aquí
                   Navigator.pop(context);
                   showSnackbar(context, "Sending image...");

@@ -165,7 +165,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       ? () {
                           String imgbase = imageToBase64(imagePath!);
                           channel.sink.add(
-                              "{\"type\":\"image\",\"code\":\"$imgbase\"}");
+                              "{\"type\":\"image\",\"image\":\"$imgbase\"}");
                           showSnackbar(context, "Sending image...");
                           setState(() {
                             imagencargada = false;
@@ -221,7 +221,7 @@ class _MyHomePageState extends State<MyHomePage> {
     LoadingOverlay.show(context);
     channel = await IOWebSocketChannel.connect('ws://$ipserver:$port');
     channel.stream.listen((message) async {
-      channel.sink.add("pong");
+      print(message);
       try {
         // Intenta decodificar la cadena como JSON
         dynamic json = jsonDecode(message);
@@ -238,6 +238,19 @@ class _MyHomePageState extends State<MyHomePage> {
           });
         }
 
+        if (json["type"] == "connected") {
+          String name = json["name"];
+          showSnackbar(context, "The user $name is connected.");
+        }
+        if (json["type"] == "disconnected") {
+          String name = json["name"];
+          showSnackbar(context, "$name disconnected.");
+        }
+
+        if (json["type"] == "message") {
+          String name = json["name"];
+          showSnackbar(context, "$name send a message.");
+        }
         // Si no se lanza una excepción, la cadena es un JSON válido
       } catch (e) {
         if (message == "Connected" && userpass == "") {
@@ -245,11 +258,9 @@ class _MyHomePageState extends State<MyHomePage> {
           userpass = (await MyDialog.mostrarDialogo(context))!;
           channel.sink.add(userpass);
         }
-        print(message);
 
         if (message == "OK") {
           usuariocorrecto = true;
-          channel.sink.add("Fluutter");
           showSnackbar(context, "Connected to server crazy display!");
           setState(() {
             conectado = true;
@@ -264,6 +275,7 @@ class _MyHomePageState extends State<MyHomePage> {
         conectado = false;
         actualizarTextoConnectar();
       });
+      print("Desconnected");
     }, onError: (error) {
       // Manejar errores de conexión
       print('Error de conexión: $error');

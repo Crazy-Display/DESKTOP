@@ -64,6 +64,7 @@ class _MyDrawerState extends State<MyDrawer> {
             title: Text('Show server users'),
             onTap: widget.connected
                 ? () {
+                  channel.sink.add('{"type":"users"}');
                   mostrarListaEnDialog(context, usernames);
                   }
                 : null,
