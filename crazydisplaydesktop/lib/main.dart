@@ -140,7 +140,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             }
                           }
                         : null,
-                    child: Text("Conectar")),
+                    child: Text("Connect")),
                 Padding(padding: EdgeInsets.symmetric(horizontal: 8)),
                 ElevatedButton(
                   onPressed: conectado
@@ -148,7 +148,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           disconnectToServer(ipserver, port);
                         }
                       : null,
-                  child: Text("Desconectar"),
+                  child: Text("Disconnect"),
                 ),
                 Spacer(),
                 ElevatedButton(
@@ -253,16 +253,19 @@ class _MyHomePageState extends State<MyHomePage> {
         if (json["type"] == "connected") {
           String name = json["name"];
           showSnackbar(context, "The user $name is connected.");
+          channel.sink.add('{"type":"users"}');
         }
         if (json["type"] == "disconnected") {
           String name = json["name"];
           showSnackbar(context, "$name disconnected.");
+          channel.sink.add('{"type":"users"}');
         }
 
         if (json["type"] == "message") {
-          String name = json["name"];
+          String name = json["user"];
           showSnackbar(context, "$name send a message.");
         }
+
         // Si no se lanza una excepción, la cadena es un JSON válido
       } catch (e) {
         if (message == "Connected" && userpass == "") {
@@ -274,11 +277,13 @@ class _MyHomePageState extends State<MyHomePage> {
         if (message == "OK") {
           usuariocorrecto = true;
           showSnackbar(context, "Connected to server crazy display!");
+          channel.sink.add('{"type":"users"}');
           setState(() {
             conectado = true;
           });
         } else if (message == "NOTOK") {
           disconnectToServer(ip, port);
+          showSnackbar(context, "User and password incorrects, try again");
         }
       }
     }, onDone: () {

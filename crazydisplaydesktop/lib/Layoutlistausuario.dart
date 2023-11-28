@@ -23,14 +23,7 @@ class _ListaDialogState extends State<ListaDialog> {
             ),
         ],
       ),
-      actions: [TextButton(
-          onPressed: () {
-            setState(() {
-              widget.lista;
-            });
-          },
-          child: Text('Reload'),
-        ),
+      actions: [
         TextButton(
           onPressed: () {
             Navigator.of(context).pop();
