@@ -32,7 +32,7 @@ void showSnackbar(BuildContext context, String message) {
     SnackBar(
       content: Text(message),
       duration:
-          Duration(seconds: 1), // Ajusta la duración según tus necesidades
+          Duration(seconds: 2), // Ajusta la duración según tus necesidades
     ),
   );
 }

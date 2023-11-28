@@ -180,19 +180,32 @@ class _MyHomePageState extends State<MyHomePage> {
                       ? () async {
                           XFile? imageFile = await ImagePicker()
                               .pickImage(source: ImageSource.gallery);
+
                           if (imageFile != null) {
-                            imagePath = imageFile.path;
-                            conectado = true;
+                            String imageName = imageFile.name.toLowerCase();
 
-                            // Convierte la ruta relativa a absoluta si es necesario
-                            String absolutePath = join(Directory.current.path,
-                                imagePath?.replaceAll('\\', '/'));
+                            // Verificar si el nombre del archivo termina con alguna de las extensiones permitidas
+                            if (imageName.endsWith('.png') ||
+                                imageName.endsWith('.jpg') ||
+                                imageName.endsWith('.jpeg')) {
+                              imagePath = imageFile.path;
+                              conectado = true;
 
-                            // Ahora puedes usar 'absolutePath' para abrir o manipular el archivo
-                            subirimagenajson(context, absolutePath);
-                            setState(() {
-                              imagencargada = true;
-                            });
+                              // Convierte la ruta relativa a absoluta si es necesario
+                              String absolutePath = join(Directory.current.path,
+                                  imagePath?.replaceAll('\\', '/'));
+
+                              // Ahora puedes usar 'absolutePath' para abrir o manipular el archivo
+                              subirimagenajson(context, absolutePath);
+
+                              setState(() {
+                                imagencargada = true;
+                              });
+                            } else {
+                              // Mostrar un mensaje de error o realizar alguna acción si la extensión no es PNG, JPG o JPEG
+                              showSnackbar(context,
+                                  "Please select an image with a valid extension (PNG, JPG, JPEG).");
+                            }
                           }
                         }
                       : null,
@@ -221,7 +234,6 @@ class _MyHomePageState extends State<MyHomePage> {
     LoadingOverlay.show(context);
     channel = await IOWebSocketChannel.connect('ws://$ipserver:$port');
     channel.stream.listen((message) async {
-      print(message);
       try {
         // Intenta decodificar la cadena como JSON
         dynamic json = jsonDecode(message);
@@ -274,11 +286,11 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         conectado = false;
         actualizarTextoConnectar();
+        userpass = "";
       });
-      print("Desconnected");
+      showSnackbar(context, "Disconnecting...");
     }, onError: (error) {
       // Manejar errores de conexión
-      print('Error de conexión: $error');
       LoadingOverlay.hide(context);
       showSnackbar(context, "Connection could not be accessed.");
     });
